@@ -1,0 +1,45 @@
+services:
+  api:
+    container_name: myapi3-api
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      - DB_HOST=db
+      - DB_PORT=8306
+      - DB_USER=killux
+      - DB_PASSWORD=killux
+      - DB_NAME=mydb
+    volumes:
+      - .:/app
+    networks:
+      - myapi3
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    
+  db:
+    container_name: myapi3-db
+    image: mariadb:11.2.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: killux
+      MYSQL_PASSWORD: killux
+    ports:
+      - "8306:3306"
+    networks:
+      - myapi3
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d/
+      - mysql_data:/var/lib/postgresql/data
+
+networks:
+  myapi3:
+    name: myapi3
+
+volumes:
+  mysql_data:
+    name: my_api3_db_data
+
