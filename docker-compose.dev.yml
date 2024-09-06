@@ -5,8 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
-      - DB_HOST=db
-      - DB_PORT=8306
+      - DB_HOST=myapi3-db
+      - DB_PORT=3306
       - DB_USER=killux
       - DB_PASSWORD=killux
       - DB_NAME=mydb

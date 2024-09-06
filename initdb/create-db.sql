@@ -27,7 +27,7 @@ USE `mydb`;
 -- Table `mydb`.`user`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`user` (
-    `id` INT NOT NULL,
+    `id` INT NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(45) NOT NULL,
     `email` VARCHAR(45) NOT NULL,
     `pseudo` VARCHAR(45) NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`user` (
 -- Table `mydb`.`video`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`video` (
-    `id` INT NOT NULL,
+    `id` INT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(45) NOT NULL,
     `duration` INT NULL,
     `user_id` INT NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`video` (
 -- Table `mydb`.`video_format`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`video_format` (
-    `id` INT NOT NULL,
+    `id` INT NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(45) NOT NULL,
     `uri` VARCHAR(45) NOT NULL,
     `video_id` INT NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`video_format` (
 -- Table `mydb`.`token`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`token` (
-    `id` INT NOT NULL,
+    `id` INT NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(45) NOT NULL,
     `expired_at` DATETIME NOT NULL,
     `user_id` INT NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`token` (
 -- Table `mydb`.`comment`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`comment` (
-    `id` INT NOT NULL,
+    `id` INT NOT NULL AUTO_INCREMENT,
     `body` LONGTEXT NULL,
     `user_id` INT NOT NULL,
     `video_id` INT NOT NULL,
