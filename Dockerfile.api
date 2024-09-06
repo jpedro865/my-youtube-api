@@ -7,13 +7,10 @@ COPY . .
 # upgrade pip
 RUN pip install --upgrade pip
 
-# installer fastapi cli
-RUN pip install fastapi[standard]
-
 # installer les dependances
 RUN pip install -r requirements.txt
 
 EXPOSE 8000
 
 # lancer l'application
-CMD ["fastapi", "run", "src/main.py"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
