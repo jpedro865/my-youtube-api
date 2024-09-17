@@ -7,6 +7,10 @@ class User(BaseModel):
   email: str
   password: str
 
+class Auth(BaseModel):
+  login: str
+  password: str
+
 # custom exception
 class MyException(Exception):
   def __init__(self, message, status_code):

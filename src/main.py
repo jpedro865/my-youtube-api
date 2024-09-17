@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.controllers.user import add_user
-from src.models import User, MyException
+from src.controllers.user import add_user, auth_user
+from src.models import User, Auth, MyException
 app = FastAPI()
 
 # Exception handler
@@ -24,4 +24,9 @@ async def root():
 @app.post("/user", status_code=201)
 async def add_user_route(user: User):
     return add_user(user)
+
+@app.post("/auth", status_code=201)
+async def auth(auth: Auth):
+    # This is a dummy function that will always return a 401
+    return auth_user(auth.login, auth.password)
         
