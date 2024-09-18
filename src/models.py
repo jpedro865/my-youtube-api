@@ -7,6 +7,7 @@ class User(BaseModel):
   email: str
   password: str
 
+# This is the Auth model that will be used to validate the request body
 class Auth(BaseModel):
   login: str
   password: str

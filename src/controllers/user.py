@@ -79,6 +79,31 @@ def auth_user(login: str, password: str):
       raise MyException(TOKEN_CREATION_ERROR_MSG, 500)
     raise MyException("{}".format(e), 400)
 
+def delete_user(user_id: int):
+  try:
+    # construct the query to get the user
+    sql_rec = select(UserDb).where(UserDb.id == user_id)
+    # execute the query and get the user
+    user = Session.scalars(sql_rec).one_or_none()
+
+    # verify if user exist
+    if user is None:
+      raise ValueError(USER_NOT_FOUND_MSG)
+    
+    # delete the user
+    Session.delete(user)
+    Session.commit()
+    return {
+      "message": "User deleted successfully",
+    }
+  except Exception as e:
+    Session.rollback()
+    print("Error while deleting user:")
+    print(e)
+    if USER_NOT_FOUND_MSG in str(e):
+      raise MyException(USER_NOT_FOUND_MSG, 404)
+    raise MyException("{}".format(e), 400)
+
 # This function will convert a User object to a JSON object
 def user_to_json(user: User):
   return None if user is None else {

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.controllers.user import add_user, auth_user
+from src.controllers.user import add_user, auth_user, delete_user
 from src.models import User, Auth, MyException
 app = FastAPI()
 
@@ -25,8 +25,13 @@ async def root():
 async def add_user_route(user: User):
     return add_user(user)
 
+# This route will authenticate a user
 @app.post("/auth", status_code=201)
-async def auth(auth: Auth):
+async def auth_route(auth: Auth):
     # This is a dummy function that will always return a 401
     return auth_user(auth.login, auth.password)
-        
+
+# This route will delete a user from the database
+@app.delete("/user/{id}", status_code=204)
+async def delete_user_route(id: int):
+    return delete_user(id)
