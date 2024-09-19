@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.controllers.user import add_user, auth_user, delete_user
+from src.controllers.user import add_user, auth_user, delete_user, update_user
+from src.controllers.token import verify_token
 from src.models import User, Auth, MyException
 app = FastAPI()
 
@@ -14,6 +15,17 @@ async def exception_handler(request: Request, exc: MyException):
         },
     )
 
+# # authentification middleware
+# @app.middleware("http")
+# async def auth_middleware(request: Request, call_next):
+#     if request.url.path == "/auth":
+#         return await call_next(request)
+
+#     if request.headers.get("Authorization") == "Bearer token":
+#         response = await call_next(request)
+#         return response
+
+# This is the root route
 @app.get("/")
 async def root():
     return {
@@ -33,5 +45,11 @@ async def auth_route(auth: Auth):
 
 # This route will delete a user from the database
 @app.delete("/user/{id}", status_code=204)
-async def delete_user_route(id: int):
+async def delete_user_route(id: int, request: Request):
+    verify_token(request.headers.get("Authorization"), id)
     return delete_user(id)
+
+@app.put("/user/{id}", status_code=200)
+async def update_user_route(id: int, user: User, request: Request):
+    verify_token(request.headers.get("Authorization"), id)
+    return update_user(id, user)

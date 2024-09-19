@@ -79,6 +79,7 @@ def auth_user(login: str, password: str):
       raise MyException(TOKEN_CREATION_ERROR_MSG, 500)
     raise MyException("{}".format(e), 400)
 
+# This function will delete a user from the database
 def delete_user(user_id: int):
   try:
     # construct the query to get the user
@@ -102,6 +103,40 @@ def delete_user(user_id: int):
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
       raise MyException(USER_NOT_FOUND_MSG, 404)
+    raise MyException("{}".format(e), 400)
+
+# This function will update a user in the database
+def update_user(user_id: int, user_data: User):
+  try:
+    # construct the query to get the user
+    sql_rec = select(UserDb).where(UserDb.id == user_id)
+    # execute the query and get the user
+    user = Session.scalars(sql_rec).one_or_none()
+
+    # verify if user exist
+    if user is None:
+      raise ValueError(USER_NOT_FOUND_MSG)
+    
+    # update the user
+    user.username = user_data.username
+    user.email = user_data.email
+    user.pseudo = user_data.pseudo
+    user.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
+    Session.commit()
+    return {
+      "message": "User updated successfully",
+      "data": user_to_json(user)
+    }
+  except Exception as e:
+    Session.rollback()
+    print("Error while updating user:")
+    print(e)
+    if USER_NOT_FOUND_MSG in str(e):
+      raise MyException(USER_NOT_FOUND_MSG, 404)
+    elif "email_UNIQUE" in str(e):
+      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
+    elif "username_UNIQUE" in str(e):
+      raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
     raise MyException("{}".format(e), 400)
 
 # This function will convert a User object to a JSON object
