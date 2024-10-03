@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users
 from src.controllers.token import verify_token
-from src.models import User, Auth, MyException
+from src.models import User, Auth, MyException, GetUsersItem
 app = FastAPI()
 
 # Exception handler
@@ -14,16 +14,6 @@ async def exception_handler(request: Request, exc: MyException):
             "message": exc.message,
         },
     )
-
-# # authentification middleware
-# @app.middleware("http")
-# async def auth_middleware(request: Request, call_next):
-#     if request.url.path == "/auth":
-#         return await call_next(request)
-
-#     if request.headers.get("Authorization") == "Bearer token":
-#         response = await call_next(request)
-#         return response
 
 # This is the root route
 @app.get("/")
@@ -55,5 +45,5 @@ async def update_user_route(id: int, user: User, request: Request):
     return update_user(id, user)
 
 @app.get("/users", status_code=200)
-async def get_users_route():
-    return get_users()
+async def get_users_route(body: GetUsersItem):
+    return get_users(body.pseudo, body.page, body.perPage)

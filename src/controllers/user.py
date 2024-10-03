@@ -3,7 +3,7 @@ from src.models import User, MyException
 from src.validators.user import validate_user
 from datetime import datetime
 from bcrypt import hashpw, gensalt
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from src.controllers.token import create_token, TOKEN_CREATION_ERROR_MSG
 
 Session = get_session()
@@ -14,6 +14,7 @@ USER_NOT_FOUND_MSG = "User not found"
 INVALID_PASSWORD_MSG = "Invalid password"
 USERNAME_ALREADY_EXISTS_MSG = "An account with this username already exists"
 EMAIL_ALREADY_EXISTS_MSG = "An account with this email already exists"
+PAGE_NOT_FOUND_MSG = "Page not found"
 
 # This function will add a user to the database
 def add_user(user_data: User):
@@ -140,19 +141,42 @@ def update_user(user_id: int, user_data: User):
     raise MyException("{}".format(e), 400)
 
 # This function will get all users from the database with a pagination system
-def get_users():
+def get_users(pseudo: str, page: int, per_page: int):
   try:
-    sql_rec = select(UserDb)
+    if page < 1:
+      raise ValueError(PAGE_NOT_FOUND_MSG)
+
+    # get the total number of users
+    users_count = Session.query(func.count(UserDb.id)).where(UserDb.pseudo != pseudo).scalar()
+
+    offset = ((page -1 ) * per_page)
+    if offset < 0:
+      offset = 0
+    
+    # construct the query to get the users
+    sql_rec = select(UserDb).where(UserDb.pseudo != pseudo).limit(per_page).offset(offset)
+
+    # execute the query and get the users
     users = Session.scalars(sql_rec).all()
+
+    if len(users) == 0:
+      raise ValueError(USER_NOT_FOUND_MSG)
+
     return {
       "message": "OK",
-      "data": [user_to_json(user) for user in users]
+      "data": [user_to_json(user) for user in users],
+      "pager": {
+        "current": page,
+        "total": users_count,
+      },
     }
   
   except Exception as e:
     Session.rollback()
     print("Error while getting users:")
     print(e)
+    if USER_NOT_FOUND_MSG in str(e):
+      raise MyException(PAGE_NOT_FOUND_MSG, 404)
     raise MyException("{}".format(e), 400)
 
 # This function will convert a User object to a JSON object

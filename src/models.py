@@ -12,6 +12,12 @@ class Auth(BaseModel):
   login: str
   password: str
 
+# classe used to validate request body of get_users_router
+class GetUsersItem(BaseModel):
+  pseudo: str
+  page: int
+  perPage: int
+
 # custom exception
 class MyException(Exception):
   def __init__(self, message, status_code):
