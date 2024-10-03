@@ -139,6 +139,22 @@ def update_user(user_id: int, user_data: User):
       raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
     raise MyException("{}".format(e), 400)
 
+# This function will get all users from the database with a pagination system
+def get_users():
+  try:
+    sql_rec = select(UserDb)
+    users = Session.scalars(sql_rec).all()
+    return {
+      "message": "OK",
+      "data": [user_to_json(user) for user in users]
+    }
+  
+  except Exception as e:
+    Session.rollback()
+    print("Error while getting users:")
+    print(e)
+    raise MyException("{}".format(e), 400)
+
 # This function will convert a User object to a JSON object
 def user_to_json(user: User):
   return None if user is None else {
