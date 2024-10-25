@@ -32,6 +32,7 @@ def validate_user(user: User):
   
   return True
 
+# This function will validate the user data for update
 def validate_auth(auth: Auth):
   # login validation
   if not auth.login:
@@ -40,5 +41,33 @@ def validate_auth(auth: Auth):
   # password validation
   if not auth.password:
     raise ValueError("Password is required")
+  
+  return True
+
+# This function will validate the user data for update
+def validate_user_update(user: User):
+  # username validation
+  if user.username:
+    if len(user.username) < 3:
+      raise ValueError("Username must be at least 3 characters")
+    if re.match(r"^[a-zA-Z0-9-_]*$", user.username) is None:
+      raise ValueError("Username must only contain letters, numbers, _ and -")
+  
+  # pseudo validation
+  if user.pseudo:
+    if len(user.pseudo) < 3:
+      raise ValueError("Pseudo must be at least 3 characters")
+    if len(user.pseudo) > 20:
+      raise ValueError("Pseudo must be at most 20 characters")
+    
+  # email validation
+  if user.email:
+    if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", user.email):
+      raise ValueError("Invalid email")
+  
+  # password validation
+  if user.password:
+    if len(user.password) < 8:
+      raise ValueError("Password must be at least 8 characters")
   
   return True

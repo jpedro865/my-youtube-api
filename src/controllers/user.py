@@ -1,6 +1,6 @@
 from src.db.connection import get_session, get_base
 from src.models import User, MyException, Auth
-from src.validators.user import validate_user, validate_auth
+from src.validators.user import validate_user, validate_auth, validate_user_update
 from datetime import datetime
 from bcrypt import hashpw, gensalt
 from sqlalchemy import select, or_, func
@@ -112,6 +112,7 @@ def delete_user(user_id: int):
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
   try:
+    validate_user_update(user_data)
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
@@ -122,10 +123,10 @@ def update_user(user_id: int, user_data: User):
       raise ValueError(USER_NOT_FOUND_MSG)
     
     # update the user
-    user.username = user_data.username
-    user.email = user_data.email
-    user.pseudo = user_data.pseudo
-    user.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
+    user.username = user_data.username if user_data.username else user.username
+    user.email = user_data.email if user_data.email else user.email
+    user.pseudo = user_data.pseudo if user_data.pseudo else user.pseudo
+    user.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8") if user_data.password else user.password
     Session.commit()
     return {
       "message": "User updated successfully",
@@ -138,9 +139,9 @@ def update_user(user_id: int, user_data: User):
     if USER_NOT_FOUND_MSG in str(e):
       raise MyException(USER_NOT_FOUND_MSG, 404)
     elif "email_UNIQUE" in str(e):
-      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
-    elif "username_UNIQUE" in str(e):
       raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
+    elif "username_UNIQUE" in str(e):
+      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
     raise MyException("{}".format(e), 400)
 
 # This function will get all users from the database with a pagination system
