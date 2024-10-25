@@ -1,4 +1,4 @@
-from src.models import User
+from src.models import User, Auth
 import re
 
 # This function will validate the user data
@@ -29,5 +29,16 @@ def validate_user(user: User):
     raise ValueError("Password is required")
   if len(user.password) < 8:
     raise ValueError("Password must be at least 8 characters")
+  
+  return True
+
+def validate_auth(auth: Auth):
+  # login validation
+  if not auth.login:
+    raise ValueError("Login is required")
+  
+  # password validation
+  if not auth.password:
+    raise ValueError("Password is required")
   
   return True

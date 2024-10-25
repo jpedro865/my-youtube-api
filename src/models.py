@@ -9,8 +9,8 @@ class User(BaseModel):
 
 # This is the Auth model that will be used to validate the request body
 class Auth(BaseModel):
-  login: str
-  password: str
+  login: str = None
+  password: str = None
 
 # classe used to validate request body of get_users_route
 class GetUsersItem(BaseModel):

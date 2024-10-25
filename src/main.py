@@ -31,7 +31,7 @@ async def add_user_route(user: User):
 @app.post("/auth", status_code=201)
 async def auth_route(auth: Auth):
     # This is a dummy function that will always return a 401
-    return auth_user(auth.login, auth.password)
+    return auth_user(auth)
 
 # This route will delete a user from the database
 @app.delete("/user/{id}", status_code=204)

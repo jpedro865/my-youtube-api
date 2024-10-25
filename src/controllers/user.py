@@ -1,6 +1,6 @@
 from src.db.connection import get_session, get_base
-from src.models import User, MyException
-from src.validators.user import validate_user
+from src.models import User, MyException, Auth
+from src.validators.user import validate_user, validate_auth
 from datetime import datetime
 from bcrypt import hashpw, gensalt
 from sqlalchemy import select, or_, func
@@ -19,7 +19,6 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 # This function will add a user to the database
 def add_user(user_data: User):
   try:
-    print(user_data)
     validate_user(user_data)
     user_data.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
     user = UserDb(
@@ -46,8 +45,12 @@ def add_user(user_data: User):
     raise MyException("{}".format(e), 400)
 
 # This function will authenticate a user
-def auth_user(login: str, password: str):
+def auth_user(auth: Auth):
   try:
+    validate_auth(auth)
+
+    login = auth.login
+    password = auth.password
     # construct the query to get the user
     sql_rec = select(UserDb).where(or_(UserDb.username == login, UserDb.email == login))
     # execute the query and get the user
