@@ -151,14 +151,14 @@ def get_users(pseudo: str, page: int, per_page: int):
       raise ValueError(PAGE_NOT_FOUND_MSG)
 
     # get the total number of users
-    users_count = Session.query(func.count(UserDb.id)).where(UserDb.pseudo != pseudo).scalar()
+    users_count = Session.query(func.count(UserDb.id)).filter(UserDb.pseudo.like(f"%{pseudo}%")).scalar()
 
     offset = ((page -1 ) * per_page)
     if offset < 0:
       offset = 0
     
     # construct the query to get the users
-    sql_rec = select(UserDb).where(UserDb.pseudo != pseudo).limit(per_page).offset(offset)
+    sql_rec = select(UserDb).filter(UserDb.pseudo.like(f"%{pseudo}%")).limit(per_page).offset(offset)
 
     # execute the query and get the users
     users = Session.scalars(sql_rec).all()
