@@ -2,10 +2,10 @@ from pydantic import BaseModel
 
 # This is the User model that will be used to validate the request body
 class User(BaseModel):
-  username: str
-  pseudo: str
-  email: str
-  password: str
+  username: str = None
+  pseudo: str = None
+  email: str = None
+  password: str = None
 
 # This is the Auth model that will be used to validate the request body
 class Auth(BaseModel):

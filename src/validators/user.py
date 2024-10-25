@@ -12,13 +12,12 @@ def validate_user(user: User):
     raise ValueError("Username must only contain letters, numbers, _ and -")
   
   # pseudo validation
-  if not user.pseudo:
-    raise ValueError("Pseudo is required")
-  if len(user.pseudo) < 3:
-    raise ValueError("Pseudo must be at least 3 characters")
-  if len(user.pseudo) > 20:
-    raise ValueError("Pseudo must be at most 20 characters")
-  
+  if user.pseudo:
+    if len(user.pseudo) < 3:
+      raise ValueError("Pseudo must be at least 3 characters")
+    if len(user.pseudo) > 20:
+      raise ValueError("Pseudo must be at most 20 characters")
+    
   # email validation
   if not user.email:
     raise ValueError("Email is required")

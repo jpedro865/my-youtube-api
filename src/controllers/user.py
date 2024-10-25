@@ -40,9 +40,9 @@ def add_user(user_data: User):
     print("Error while adding user to db:")
     print(e)
     if "email_UNIQUE" in str(e):
-      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
-    elif "username_UNIQUE" in str(e):
       raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
+    elif "username_UNIQUE" in str(e):
+      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
     raise MyException("{}".format(e), 400)
 
 # This function will authenticate a user
