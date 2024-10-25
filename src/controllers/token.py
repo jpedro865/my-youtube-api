@@ -1,5 +1,5 @@
 from src.db.connection import get_session, get_base
-from src.models import MyException
+from src.models import ApiException
 from datetime import datetime, timedelta
 from sqlalchemy import select
 import secrets
@@ -78,7 +78,7 @@ def verify_token(token: str, user_id: int):
     print("Error while verifying token:")
     print(e)
     if TOKEN_NOT_FOUND_MSG in str(e):
-      raise MyException(TOKEN_NOT_FOUND_MSG, 404)
+      raise ApiException(404, 1402, [TOKEN_NOT_FOUND_MSG])
     elif TOKEN_EXPIRED_MSG in str(e):
-      raise MyException(TOKEN_EXPIRED_MSG, 401)
-    raise MyException(VERIFICATION_ERROR_MSG, 401)
+      raise ApiException(401, 1401, [TOKEN_EXPIRED_MSG])
+    raise ApiException(401, 1444, [VERIFICATION_ERROR_MSG])

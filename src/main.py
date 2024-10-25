@@ -2,16 +2,18 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
-from src.models import User, Auth, MyException, GetUsersItem
+from src.models import User, Auth, ApiException, GetUsersItem
 app = FastAPI()
 
 # Exception handler
 @app.exception_handler(Exception)
-async def exception_handler(request: Request, exc: MyException):
+async def exception_handler(request: Request, exc: ApiException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "message": exc.message,
+            "code": exc.error_code,
+            "data": exc.errors,
         },
     )
 

@@ -19,7 +19,16 @@ class GetUsersItem(BaseModel):
   perPage: int
 
 # custom exception
-class MyException(Exception):
-  def __init__(self, message, status_code):
-    self.message = message
+class ApiException(Exception):
+  def __init__(self, status_code: int, error_code: int=None, errors: list=None):
+    switcher = {
+      400: "Bad Request",
+      401: "Unauthorized",
+      403: "Forbidden",
+      404: "Not Found",
+      500: "Internal Server Error"
+    }
+    self.message = switcher.get(status_code, "Internal Server Error")
     self.status_code = status_code
+    self.error_code = error_code
+    self.errors = errors

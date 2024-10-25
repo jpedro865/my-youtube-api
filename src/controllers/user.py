@@ -1,5 +1,5 @@
 from src.db.connection import get_session, get_base
-from src.models import User, MyException, Auth
+from src.models import User, ApiException, Auth
 from src.validators.user import validate_user, validate_auth, validate_user_update
 from datetime import datetime
 from bcrypt import hashpw, gensalt
@@ -38,11 +38,14 @@ def add_user(user_data: User):
     Session.rollback()
     print("Error while adding user to db:")
     print(e)
+    errors = []
+    if USER_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     if "email_UNIQUE" in str(e):
-      raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
-    elif "username_UNIQUE" in str(e):
-      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
-    raise MyException("{}".format(e), 400)
+      raise ApiException(400, 1101, [EMAIL_ALREADY_EXISTS_MSG])
+    if "username_UNIQUE" in str(e):
+      raise ApiException(400, 1101, [USERNAME_ALREADY_EXISTS_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will authenticate a user
 def auth_user(auth: Auth):
@@ -76,12 +79,12 @@ def auth_user(auth: Auth):
     print("Error while authenticating user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
-      raise MyException(USER_NOT_FOUND_MSG, 404)
-    elif INVALID_PASSWORD_MSG in str(e):
-      raise MyException(INVALID_PASSWORD_MSG, 401)
-    elif TOKEN_CREATION_ERROR_MSG in str(e):
-      raise MyException(TOKEN_CREATION_ERROR_MSG, 500)
-    raise MyException("{}".format(e), 400)
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    if INVALID_PASSWORD_MSG in str(e):
+      raise ApiException(401, 1103, [INVALID_PASSWORD_MSG])
+    if TOKEN_CREATION_ERROR_MSG in str(e):
+      raise ApiException(500, 1455, [TOKEN_CREATION_ERROR_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will delete a user from the database
 def delete_user(user_id: int):
@@ -106,8 +109,8 @@ def delete_user(user_id: int):
     print("Error while deleting user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
-      raise MyException(USER_NOT_FOUND_MSG, 404)
-    raise MyException("{}".format(e), 400)
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
@@ -137,12 +140,12 @@ def update_user(user_id: int, user_data: User):
     print("Error while updating user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
-      raise MyException(USER_NOT_FOUND_MSG, 404)
-    elif "email_UNIQUE" in str(e):
-      raise MyException(EMAIL_ALREADY_EXISTS_MSG, 400)
-    elif "username_UNIQUE" in str(e):
-      raise MyException(USERNAME_ALREADY_EXISTS_MSG, 400)
-    raise MyException("{}".format(e), 400)
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    if "email_UNIQUE" in str(e):
+      raise ApiException(400, 1101, [EMAIL_ALREADY_EXISTS_MSG])
+    if "username_UNIQUE" in str(e):
+      raise ApiException(400, 1101, [USERNAME_ALREADY_EXISTS_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will get all users from the database with a pagination system
 def get_users(pseudo: str, page: int, per_page: int):
@@ -163,8 +166,6 @@ def get_users(pseudo: str, page: int, per_page: int):
     # execute the query and get the users
     users = Session.scalars(sql_rec).all()
 
-    if len(users) == 0:
-      raise ValueError(USER_NOT_FOUND_MSG)
 
     return {
       "message": "OK",
@@ -179,9 +180,9 @@ def get_users(pseudo: str, page: int, per_page: int):
     Session.rollback()
     print("Error while getting users:")
     print(e)
-    if USER_NOT_FOUND_MSG in str(e):
-      raise MyException(PAGE_NOT_FOUND_MSG, 404)
-    raise MyException("{}".format(e), 400)
+    if PAGE_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1004, [PAGE_NOT_FOUND_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will get a user by its id from the database
 def get_user_by_id(user_id: int):
@@ -204,8 +205,8 @@ def get_user_by_id(user_id: int):
     print("Error while getting user by id:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
-      raise MyException(USER_NOT_FOUND_MSG, 404)
-    raise MyException("{}".format(e), 400)
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will convert a User object to a JSON object
 def user_to_json(user: User):
