@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users
+from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
 from src.models import User, Auth, MyException, GetUsersItem
 app = FastAPI()
@@ -39,11 +39,19 @@ async def delete_user_route(id: int, request: Request):
     verify_token(request.headers.get("Authorization"), id)
     return delete_user(id)
 
+# This route will update a user in the database
 @app.put("/user/{id}", status_code=200)
 async def update_user_route(id: int, user: User, request: Request):
     verify_token(request.headers.get("Authorization"), id)
     return update_user(id, user)
 
+# This route will get a user from the database
 @app.get("/users", status_code=200)
 async def get_users_route(body: GetUsersItem):
     return get_users(body.pseudo, body.page, body.perPage)
+
+# This route will get a user from the database by id
+@app.get("/user/{user_id}", status_code=200)
+async def get_user_by_id_route(user_id: int, request: Request):
+    verify_token(request.headers.get("Authorization"), user_id)
+    return get_user_by_id(user_id)

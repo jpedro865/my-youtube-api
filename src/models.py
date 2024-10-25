@@ -12,7 +12,7 @@ class Auth(BaseModel):
   login: str
   password: str
 
-# classe used to validate request body of get_users_router
+# classe used to validate request body of get_users_route
 class GetUsersItem(BaseModel):
   pseudo: str
   page: int

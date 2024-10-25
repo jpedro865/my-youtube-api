@@ -179,6 +179,30 @@ def get_users(pseudo: str, page: int, per_page: int):
       raise MyException(PAGE_NOT_FOUND_MSG, 404)
     raise MyException("{}".format(e), 400)
 
+# This function will get a user by its id from the database
+def get_user_by_id(user_id: int):
+  try:
+    # construct the query to get the user
+    sql_rec = select(UserDb).where(UserDb.id == user_id)
+    # execute the query and get the user
+    user = Session.scalars(sql_rec).first()
+
+    # verify if user exist
+    if user is None:
+      raise ValueError(USER_NOT_FOUND_MSG)
+    
+    return {
+      "message": "OK",
+      "data": user_to_json(user)
+    }
+  except Exception as e:
+    Session.rollback()
+    print("Error while getting user by id:")
+    print(e)
+    if USER_NOT_FOUND_MSG in str(e):
+      raise MyException(USER_NOT_FOUND_MSG, 404)
+    raise MyException("{}".format(e), 400)
+
 # This function will convert a User object to a JSON object
 def user_to_json(user: User):
   return None if user is None else {
