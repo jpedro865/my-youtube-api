@@ -14,9 +14,9 @@ class Auth(BaseModel):
 
 # classe used to validate request body of get_users_route
 class GetUsersItem(BaseModel):
-  pseudo: str
-  page: int
-  perPage: int
+  pseudo: str = ''
+  page: int = 1 # default value
+  perPage: int  = 5 # default value
 
 # custom exception
 class ApiException(Exception):

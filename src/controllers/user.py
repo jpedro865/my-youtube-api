@@ -156,6 +156,7 @@ def get_users(pseudo: str, page: int, per_page: int):
     # get the total number of users
     users_count = Session.query(func.count(UserDb.id)).filter(UserDb.pseudo.like(f"%{pseudo}%")).scalar()
 
+    # calculate the offset
     offset = ((page -1 ) * per_page)
     if offset < 0:
       offset = 0
@@ -166,7 +167,10 @@ def get_users(pseudo: str, page: int, per_page: int):
     # execute the query and get the users
     users = Session.scalars(sql_rec).all()
 
-
+    # verify if pages exists (Page 1 always exists)
+    if (len(users) == 0 and page != 1):
+      raise ValueError(PAGE_NOT_FOUND_MSG)
+    
     return {
       "message": "OK",
       "data": [user_to_json(user) for user in users],
