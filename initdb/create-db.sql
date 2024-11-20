@@ -42,12 +42,12 @@ CREATE TABLE IF NOT EXISTS `mydb`.`user` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`video` (
     `id` INT NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(45) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
     `duration` INT NULL,
     `user_id` INT NOT NULL,
-    `source` VARCHAR(45) NOT NULL,
+    `source` VARCHAR(255) NOT NULL,
     `created_at` DATETIME NOT NULL,
-    `view` INT NOT NULL,
+    `views` INT NOT NULL,
     `enabled` TINYINT(1) NOT NULL,
     PRIMARY KEY (`id`),
     INDEX `fk_video_user_idx` (`user_id` ASC),

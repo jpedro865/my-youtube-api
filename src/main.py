@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
+from src.controllers.video import add_video_to_user
 from src.models import User, Auth, ApiException, GetUsersItem
+
 app = FastAPI()
 
 # Exception handler
@@ -57,3 +59,9 @@ async def get_users_route(body: GetUsersItem):
 async def get_user_by_id_route(user_id: int, request: Request):
     verify_token(request.headers.get("Authorization"), user_id)
     return get_user_by_id(user_id)
+
+# This route will add a video to the user
+@app.post("/user/{user_id}/video", status_code=201)
+async def add_video_to_user_route(user_id: int = Path(...), Authorization: str = Header(...), name: str = Form(...), source: UploadFile = File(...)):
+    verify_token(Authorization, user_id)
+    return add_video_to_user(user_id, name, source)
