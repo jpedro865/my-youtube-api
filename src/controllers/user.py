@@ -17,8 +17,8 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 
 # This function will add a user to the database
 def add_user(user_data: User):
+  session = get_session()
   try:
-    session = get_session()
     validate_user(user_data)
     user_data.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
     user = UserDb(
@@ -38,7 +38,6 @@ def add_user(user_data: User):
     session.rollback()
     print("Error while adding user to db:")
     print(e)
-    errors = []
     if USER_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     if "email_UNIQUE" in str(e):
@@ -49,8 +48,8 @@ def add_user(user_data: User):
 
 # This function will authenticate a user
 def auth_user(auth: Auth):
+  session = get_session()
   try:
-    session = get_session()
     validate_auth(auth)
 
     login = auth.login
@@ -89,8 +88,8 @@ def auth_user(auth: Auth):
 
 # This function will delete a user from the database
 def delete_user(user_id: int):
+  session = get_session()
   try:
-    session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
@@ -116,8 +115,8 @@ def delete_user(user_id: int):
 
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
+  session = get_session()
   try:
-    session = get_session()
     validate_user_update(user_data)
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
@@ -152,8 +151,8 @@ def update_user(user_id: int, user_data: User):
 
 # This function will get all users from the database with a pagination system
 def get_users(pseudo: str, page: int, per_page: int):
+  session = get_session()
   try:
-    session = get_session()
     if page < 1:
       raise ValueError(PAGE_NOT_FOUND_MSG)
 
@@ -195,8 +194,8 @@ def get_users(pseudo: str, page: int, per_page: int):
 
 # This function will get a user by its id from the database
 def get_user_by_id(user_id: int):
+  session = get_session()
   try:
-    session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user

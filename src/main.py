@@ -2,8 +2,8 @@ from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
-from src.controllers.video import add_video_to_user, get_videos
-from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser
+from src.controllers.video import add_video_to_user, get_videos, update_video
+from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate
 
 app = FastAPI()
 
@@ -77,3 +77,9 @@ async def get_videos_route(body: VideoList):
 async def get_user_videos_route(user_id: int, body: BodyVideoListByUser, request: Request):
     verify_token(request.headers.get("Authorization"))
     return get_videos(VideoList(user=user_id, page=body.page, perPage=body.perPage))
+
+# This route will update a video
+@app.put("/video/{video_id}", status_code=200)
+async def update_video_route(video_id: int, body: BodyVideoUpdate, request: Request):
+    verify_token(request.headers.get("Authorization"), body.user)
+    return update_video(video_id, body.name)

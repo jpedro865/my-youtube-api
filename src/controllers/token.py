@@ -15,7 +15,7 @@ VERIFICATION_ERROR_MSG = "Error while verifying token"
 # This function will create a token for a user and add it to the database
 def create_token(user_id: int):
   try:
-    Session = get_session()
+    session = get_session()
     unexpired_token = user_has_unexpired_token(user_id)
     if unexpired_token:
       return unexpired_token
@@ -29,11 +29,11 @@ def create_token(user_id: int):
       user_id=user_id,
       expired_at=datetime.now() + timedelta(hours=3),
     )
-    Session.add(token)
-    Session.commit()
+    session.add(token)
+    session.commit()
     return new_token
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while creating token:")
     print(e)
     return None
@@ -41,19 +41,19 @@ def create_token(user_id: int):
 # This function will verify if user possess a token
 def user_has_unexpired_token(user_id: int):
   try:
-    Session = get_session()
+    session = get_session()
     # construct the query to get the token
     sql_rec = select(TokenDb).where(TokenDb.user_id == user_id)
     # execute the query and get the token
-    token = Session.scalars(sql_rec).one_or_none()
+    token = session.scalars(sql_rec).one_or_none()
 
     # verify if token exist and is not expired
     if token is None:
       return False
     if token.expired_at < datetime.now():
       # delete the token if it is expired
-      Session.delete(token)
-      Session.commit()
+      session.delete(token)
+      session.commit()
       return False
     return token.code
   except Exception as e:
@@ -63,7 +63,7 @@ def user_has_unexpired_token(user_id: int):
   
 def verify_token(token: str, user_id: int = None):
   try:
-    Session = get_session()
+    session = get_session()
     if token is None:
       raise ValueError(TOKEN_NOT_FOUND_MSG)
     # construct the query to get the token
@@ -71,7 +71,7 @@ def verify_token(token: str, user_id: int = None):
     if user_id is not None:
       sql_rec = sql_rec.where(TokenDb.user_id == user_id)
     # execute the query and get the token
-    token = Session.scalars(sql_rec).one_or_none()
+    token = session.scalars(sql_rec).one_or_none()
 
     # verify if token exist and is not expired
     if token is None:

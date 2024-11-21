@@ -19,8 +19,8 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 
 # This function will return a list of videos
 def get_videos(body: VideoList):
+  session = get_session()
   try:
-    Session = get_session()
     print(body)
     if body.page < 1:
       raise ValueError(PAGE_NOT_FOUND_MSG)
@@ -30,11 +30,11 @@ def get_videos(body: VideoList):
     if body.user is not None and body.user != "":
       if isinstance(body.user, str):
         sql_rec = select(UserDb).where(UserDb.username == body.user)
-        user = Session.scalars(sql_rec).first()
+        user = session.scalars(sql_rec).first()
         if user is None:
           raise ValueError(USER_NOT_FOUND_MSG)
       elif isinstance(body.user, int):
-        user = Session.query(UserDb).filter(UserDb.id == body.user).first()
+        user = session.query(UserDb).filter(UserDb.id == body.user).first()
         if user is None:
           raise ValueError(USER_NOT_FOUND_MSG)
     
@@ -58,7 +58,7 @@ def get_videos(body: VideoList):
 
     # get total number of videos
     try:
-      total_videos = Session.scalars(sql_rec_count).first()
+      total_videos = session.scalars(sql_rec_count).first()
     except Exception as e:
       print("Error while getting total videos:")
       print(e)
@@ -76,7 +76,7 @@ def get_videos(body: VideoList):
       # limit the number of videos fetched and offset
       sql_rec = sql_rec.limit(body.perPage).offset(offset)
       # execute the query and get the videos
-      videos = Session.scalars(sql_rec).all()
+      videos = session.scalars(sql_rec).all()
     except Exception as e:
       print("Error while limiting videos:")
       print(e)
@@ -90,7 +90,7 @@ def get_videos(body: VideoList):
 
     data = []
     for video in videos:
-      user = Session.query(UserDb).filter(UserDb.id == video.user_id).first()
+      user = session.query(UserDb).filter(UserDb.id == video.user_id).first()
       data.append(video_to_json(video, user))
     
     return {
@@ -108,9 +108,41 @@ def get_videos(body: VideoList):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     raise ApiException(500, 1999, ["{}".format(e)])
 
+# This function will update a video
+def update_video(video_id: int, name: str):
+  session = get_session()
+  try:
+    if name is None:
+      raise ApiException(400, 1002, ["Nothing to update"])
+    
+    video = session.query(VideoDb).filter(VideoDb.id == video_id).first()
+    if video is None:
+      raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+
+    # update video name
+    video.name = name
+    session.commit()
+
+    # get user info
+    user = session.query(UserDb).filter(UserDb.id == video.user_id).first()
+    if user is None:
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+
+    return {
+      "message": "OK",
+      "data": video_to_json(video, user)
+    }
+  except Exception as e:
+    session.rollback()
+    print("Error while updating video:")
+    print(e)
+    if VIDEO_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+    raise ApiException(500, 1999, ["{}".format(e)])
+
 # This function will add a video to the user
 def add_video_to_user(user_id: int, name: str, video: UploadFile):
-  Session = get_session()
+  session = get_session()
   if video is None:
     raise ApiException(400, 1001, ["Video source is required"])
   if name is None:
@@ -119,7 +151,7 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
     raise ApiException(400, 1003, ["Video must be in mp4 format"])
   try:
     # get user and check if it exists
-    user = Session.query(UserDb).filter(UserDb.id == user_id).first()
+    user = session.query(UserDb).filter(UserDb.id == user_id).first()
     if user is None:
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     
@@ -129,7 +161,7 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
       raise ApiException(500, 1999, ["Error while saving video"])
     
     # get video info (width, height, duration)
-    video_info = getVideoInfo(video_path)
+    video_info = get_video_info(video_path)
     
     video = VideoDb(
       user_id=user_id,
@@ -140,22 +172,24 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
       created_at=datetime.now(),
       enabled=True
     )
-    Session.add(video)
-    Session.commit()
+    session.add(video)
+    session.commit()
     return {
       "message": "OK",
       "data": video_to_json(video, user)
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while adding video to db:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     raise ApiException(500, 1999, ["{}".format(e)])
+  
+############################################################## HELPER FUNCTIONS ##############################################################
 
 def video_to_json(video, user):
-  return {
+  return {} if video is None else {
     "id": video.id,
     "name": video.name,
     "source": video.source,
@@ -181,32 +215,32 @@ def video_to_json(video, user):
 # Saves video received from the user to the public directory
 # Returns the path to the saved video
 def save_video_public(video: UploadFile) -> str:
-  publicVideoPath = "{}/public/videos/".format(os.getcwd())
+  public_video_path = "{}/public/videos/".format(os.getcwd())
 
   # create video directory
   try:
-    if not os.path.exists(publicVideoPath):
-      os.makedirs(publicVideoPath)
-  except:
+    if not os.path.exists(public_video_path):
+      os.makedirs(public_video_path)
+  except Exception:
     raise ApiException(500, 1999, ["Error while creating video directory"])
   
   # check if video already exists
   try:
-    if os.path.exists("{}{}".format(publicVideoPath, video.filename)):
+    if os.path.exists("{}{}".format(public_video_path, video.filename)):
       video.filename = "{}_{}".format(datetime.now().strftime("%Y%m%d%H%M%S"), video.filename)
-  except:
+  except Exception:
     raise ApiException(500, 1999, ["Error while checking video existence"])
   
   try:
-    with open("{}{}".format(publicVideoPath, video.filename), "wb") as buffer:
+    with open("{}{}".format(public_video_path, video.filename), "wb") as buffer:
       buffer.write(video.file.read())
-  except:
+  except Exception:
     raise ApiException(500, 1999, ["Error while saving video"])
 
-  return "{}{}".format(publicVideoPath, video.filename)
+  return "{}{}".format(public_video_path, video.filename)
 
 # This function meta data of a video
-def getVideoInfo(path):
+def get_video_info(path):
   try:
     probe = ffmpeg.probe(path)
     video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
