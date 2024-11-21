@@ -2,9 +2,9 @@ from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
-from src.controllers.video import add_video_to_user, get_videos, update_video, delete_video
+from src.controllers.video import add_video_to_user, get_videos, update_video, delete_video, add_video_format
 from src.controllers.comment import add_comment_to_video, get_comments_of_video
-from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate, BodyAddComment, BodyListComments
+from src.models import User, Auth,ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate, BodyAddComment, BodyListComments, BodyAddFormat
 
 app = FastAPI()
 
@@ -102,3 +102,8 @@ async def add_comment_to_video_route(video_id: int, body: BodyAddComment, reques
 async def get_comments_of_video_route(video_id: int, body: BodyListComments, request: Request):
     verify_token(request.headers.get("Authorization"))
     return get_comments_of_video(video_id, body.page, body.perPage)
+
+# This route adds a video format to the database
+@app.patch("/video/{video_id}", status_code=201)
+async def add_video_format_route(video_id: int, body: BodyAddFormat):
+    return add_video_format(video_id, body.format, body.file)

@@ -56,3 +56,7 @@ class BodyAddComment(BaseModel):
 class BodyListComments(BaseModel):
   page: int = 1
   perPage: int = 5
+
+class BodyAddFormat(BaseModel):
+  format: str = None
+  file: str = None

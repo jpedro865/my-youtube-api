@@ -11,6 +11,7 @@ from math import ceil
 
 UserDb = get_base().classes.user
 VideoDb = get_base().classes.video
+VideoFormatDb = get_base().classes.video_format
 
 # error message
 USER_NOT_FOUND_MSG = "User not found"
@@ -78,12 +79,13 @@ def get_videos(body: VideoList):
     if (len(videos) == 0 and body.page != 1):
       raise ValueError(PAGE_NOT_FOUND_MSG)
     
-    total_pages = ceil(total_videos / body.perPage)
+    total_pages = ceil(total_videos / body.perPage)    
 
     data = []
     for video in videos:
+      formats = session.query(VideoFormatDb).filter(VideoFormatDb.video_id == video.id).all()
       user = session.query(UserDb).filter(UserDb.id == video.user_id).first()
-      data.append(video_to_json(video, user))
+      data.append(video_to_json(video, user, formats))
     
     return {
       "message": "OK",
@@ -121,10 +123,13 @@ def update_video(video_id: int, name: str):
     user = session.query(UserDb).filter(UserDb.id == video.user_id).first()
     if user is None:
       raise ValueError(USER_NOT_FOUND_MSG)
+    
+    # get video formats
+    video_formats = session.query(VideoFormatDb).filter(VideoFormatDb.video_id == video_id).all()
 
     return {
       "message": "OK",
-      "data": video_to_json(video, user)
+      "data": video_to_json(video, user, video_formats)
     }
   except Exception as e:
     session.rollback()
@@ -172,9 +177,13 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
     )
     session.add(video)
     session.commit()
+
+    # get video formats
+    video_formats = session.query(VideoFormatDb).filter(VideoFormatDb.video_id == video.id).all()
+
     return {
       "message": "OK",
-      "data": video_to_json(video, user)
+      "data": video_to_json(video, user, video_formats)
     }
   except Exception as e:
     session.rollback()
@@ -216,10 +225,56 @@ def delete_video(video_id: int, user_id: int):
     if "Forbidden" in str(e):
       raise ApiException(403, 1006, ["Forbidden"])
     raise ApiException(500, 1999, ["{}".format(e)])
+
+# This function will add a video format
+def add_video_format(video_id: int, format: str, source: str):
+  session = get_session()
+  try:
+    if format not in ["1080", "720", "480", "360", "240", "144"]:
+      raise ValueError("Invalid format")
+    if source is None:
+      raise ValueError(VIDEO_SOURCE_REQUIRED)
+    
+    video = session.query(VideoDb).filter(VideoDb.id == video_id).first()
+    if video is None:
+      raise ValueError(VIDEO_NOT_FOUND_MSG)
+    
+    # check if video format already exists
+    video_format = session.query(VideoFormatDb).filter(VideoFormatDb.video_id == video_id, VideoFormatDb.code == format).first()
+    if video_format is not None:
+      raise ValueError("Format already exists")
+    
+    # add video format
+    video_format = VideoFormatDb(
+      video_id=video_id,
+      code=format,
+      uri=source
+    )
+    session.add(video_format)
+    session.commit()
+
+    video_formats = session.query(VideoFormatDb).filter(VideoFormatDb.video_id == video_id).all()
+    return {
+      "message": "OK",
+      "data": video_to_json(video, video.user, video_formats)
+    }
+  except Exception as e:
+    session.rollback()
+    print("Error while adding video format:")
+    print(e)
+    if VIDEO_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+    if VIDEO_SOURCE_REQUIRED in str(e):
+      raise ApiException(400, 1002, [VIDEO_SOURCE_REQUIRED])
+    if "Invalid format" in str(e):
+      raise ApiException(400, 1008, ["Invalid format"])
+    if "Format already exists" in str(e):
+      raise ApiException(400, 1009, ["Format already exists"])
+    raise ApiException(500, 1999, ["{}".format(e)])
   
 ############################################################## HELPER FUNCTIONS ##############################################################
 
-def video_to_json(video, user):
+def video_to_json(video, user, video_format=None):
   return {} if video is None else {
     "id": video.id,
     "name": video.name,
@@ -233,15 +288,14 @@ def video_to_json(video, user):
       "pseudo": user.pseudo,
       "created_at": user.created_at
     },
-    "format": {
-      "1080": video.source,
-      "720": video.source,
-      "480": video.source,
-      "360": video.source,
-      "240": video.source,
-      "144": video.source
-    }
+    "format": format_to_json(video_format)
   }
+
+def format_to_json(video_format):
+  formats = {}
+  for f in video_format:
+    formats[f.code] = f.uri
+  return formats
 
 # Saves video received from the user to the public directory
 # Returns the path to the saved video
