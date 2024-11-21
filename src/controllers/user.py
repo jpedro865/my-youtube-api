@@ -18,7 +18,7 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 # This function will add a user to the database
 def add_user(user_data: User):
   try:
-    Session = get_session()
+    session = get_session()
     validate_user(user_data)
     user_data.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
     user = UserDb(
@@ -28,14 +28,14 @@ def add_user(user_data: User):
       password=user_data.password,
       created_at=datetime.now(),
     )
-    Session.add(user)
-    Session.commit()
+    session.add(user)
+    session.commit()
     return {
       "message": "User added successfully",
       "data": user_to_json(user)
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while adding user to db:")
     print(e)
     errors = []
@@ -50,7 +50,7 @@ def add_user(user_data: User):
 # This function will authenticate a user
 def auth_user(auth: Auth):
   try:
-    Session = get_session()
+    session = get_session()
     validate_auth(auth)
 
     login = auth.login
@@ -58,7 +58,7 @@ def auth_user(auth: Auth):
     # construct the query to get the user
     sql_rec = select(UserDb).where(or_(UserDb.username == login, UserDb.email == login))
     # execute the query and get the user
-    user = Session.scalars(sql_rec).one_or_none()
+    user = session.scalars(sql_rec).one_or_none()
 
     # verify user and password
     if user is None:
@@ -76,7 +76,7 @@ def auth_user(auth: Auth):
       "data": token,
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while authenticating user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
@@ -90,24 +90,24 @@ def auth_user(auth: Auth):
 # This function will delete a user from the database
 def delete_user(user_id: int):
   try:
-    Session = get_session()
+    session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
-    user = Session.scalars(sql_rec).one_or_none()
+    user = session.scalars(sql_rec).one_or_none()
 
     # verify if user exist
     if user is None:
       raise ValueError(USER_NOT_FOUND_MSG)
     
     # delete the user
-    Session.delete(user)
-    Session.commit()
+    session.delete(user)
+    session.commit()
     return {
       "message": "User deleted successfully",
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while deleting user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
@@ -117,12 +117,12 @@ def delete_user(user_id: int):
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
   try:
-    Session = get_session()
+    session = get_session()
     validate_user_update(user_data)
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
-    user = Session.scalars(sql_rec).one_or_none()
+    user = session.scalars(sql_rec).one_or_none()
 
     # verify if user exist
     if user is None:
@@ -133,13 +133,13 @@ def update_user(user_id: int, user_data: User):
     user.email = user_data.email if user_data.email else user.email
     user.pseudo = user_data.pseudo if user_data.pseudo else user.pseudo
     user.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8") if user_data.password else user.password
-    Session.commit()
+    session.commit()
     return {
       "message": "User updated successfully",
       "data": user_to_json(user)
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while updating user:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
@@ -153,11 +153,12 @@ def update_user(user_id: int, user_data: User):
 # This function will get all users from the database with a pagination system
 def get_users(pseudo: str, page: int, per_page: int):
   try:
+    session = get_session()
     if page < 1:
       raise ValueError(PAGE_NOT_FOUND_MSG)
 
     # get the total number of users
-    users_count = Session.query(func.count(UserDb.id)).filter(UserDb.pseudo.like(f"%{pseudo}%")).scalar()
+    users_count = session.query(func.count(UserDb.id)).filter(UserDb.pseudo.like(f"%{pseudo}%")).scalar()
 
     # calculate the offset
     offset = ((page -1 ) * per_page)
@@ -168,7 +169,7 @@ def get_users(pseudo: str, page: int, per_page: int):
     sql_rec = select(UserDb).filter(UserDb.pseudo.like(f"%{pseudo}%")).limit(per_page).offset(offset)
 
     # execute the query and get the users
-    users = Session.scalars(sql_rec).all()
+    users = session.scalars(sql_rec).all()
 
     # verify if pages exists (Page 1 always exists)
     if (len(users) == 0 and page != 1):
@@ -184,8 +185,8 @@ def get_users(pseudo: str, page: int, per_page: int):
     }
   
   except Exception as e:
-    Session = get_session()
-    Session.rollback()
+    session = get_session()
+    session.rollback()
     print("Error while getting users:")
     print(e)
     if PAGE_NOT_FOUND_MSG in str(e):
@@ -195,11 +196,11 @@ def get_users(pseudo: str, page: int, per_page: int):
 # This function will get a user by its id from the database
 def get_user_by_id(user_id: int):
   try:
-    Session = get_session()
+    session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
-    user = Session.scalars(sql_rec).first()
+    user = session.scalars(sql_rec).first()
 
     # verify if user exist
     if user is None:
@@ -210,7 +211,7 @@ def get_user_by_id(user_id: int):
       "data": user_to_json(user)
     }
   except Exception as e:
-    Session.rollback()
+    session.rollback()
     print("Error while getting user by id:")
     print(e)
     if USER_NOT_FOUND_MSG in str(e):

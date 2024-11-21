@@ -61,13 +61,15 @@ def user_has_unexpired_token(user_id: int):
     print(e)
     return False
   
-def verify_token(token: str, user_id: int):
+def verify_token(token: str, user_id: int = None):
   try:
     Session = get_session()
     if token is None:
       raise ValueError(TOKEN_NOT_FOUND_MSG)
     # construct the query to get the token
-    sql_rec = select(TokenDb).where(TokenDb.code == token).where(TokenDb.user_id == user_id)
+    sql_rec = select(TokenDb).where(TokenDb.code == token)
+    if user_id is not None:
+      sql_rec = sql_rec.where(TokenDb.user_id == user_id)
     # execute the query and get the token
     token = Session.scalars(sql_rec).one_or_none()
 

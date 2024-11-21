@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
 from src.controllers.video import add_video_to_user, get_videos
-from src.models import User, Auth, ApiException, GetUsersItem, VideoList
+from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser
 
 app = FastAPI()
 
@@ -71,3 +71,9 @@ async def add_video_to_user_route(user_id: int = Path(...), Authorization: str =
 @app.get("/videos", status_code=200)
 async def get_videos_route(body: VideoList):
     return get_videos(body)
+
+# This route will get a list of videos of the specified user
+@app.get("/user/{user_id}/videos", status_code=200)
+async def get_user_videos_route(user_id: int, body: BodyVideoListByUser, request: Request):
+    verify_token(request.headers.get("Authorization"))
+    return get_videos(VideoList(user=user_id, page=body.page, perPage=body.perPage))

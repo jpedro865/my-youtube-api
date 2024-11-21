@@ -41,3 +41,7 @@ class VideoList(BaseModel):
   duration: int = None
   page: int = 1
   perPage: int = 5
+
+class BodyVideoListByUser(BaseModel):
+  page: int = 1
+  perPage: int = 5
