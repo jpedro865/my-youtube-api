@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
-from src.controllers.video import add_video_to_user, get_videos, update_video
+from src.controllers.video import add_video_to_user, get_videos, update_video, delete_video
 from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate
 
 app = FastAPI()
@@ -83,3 +83,9 @@ async def get_user_videos_route(user_id: int, body: BodyVideoListByUser, request
 async def update_video_route(video_id: int, body: BodyVideoUpdate, request: Request):
     verify_token(request.headers.get("Authorization"), body.user)
     return update_video(video_id, body.name)
+
+# This route will delete a video
+@app.delete("/video/{video_id}", status_code=204)
+async def delete_video_route(video_id: int, request: Request):
+    user_id = verify_token(request.headers.get("Authorization"))
+    return delete_video(video_id, user_id)

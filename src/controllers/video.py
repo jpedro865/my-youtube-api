@@ -185,6 +185,27 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
     if USER_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     raise ApiException(500, 1999, ["{}".format(e)])
+
+# This function will delete a video
+def delete_video(video_id: int, user_id: int):
+  session = get_session()
+  try:
+    video = session.query(VideoDb).filter(VideoDb.id == video_id).first()
+    if video is None:
+      raise ValueError(VIDEO_NOT_FOUND_MSG)
+    if video.user.id != user_id:
+      raise ValueError("Forbidden")
+    
+    # delete video
+    session.delete(video)
+    session.commit()
+    return {
+      "message": "OK",
+    }
+  except Exception as e:
+    print("Error while deleting video:")
+    print(e)
+    raise ApiException(500, 1999, ["{}".format(e)])
   
 ############################################################## HELPER FUNCTIONS ##############################################################
 

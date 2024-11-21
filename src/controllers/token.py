@@ -78,6 +78,7 @@ def verify_token(token: str, user_id: int = None):
       raise ValueError(VERIFICATION_ERROR_MSG)
     if token.expired_at < datetime.now():
       raise ValueError(TOKEN_EXPIRED_MSG)
+    return token.user_id
   except Exception as e:
     print("Error while verifying token:")
     print(e)
