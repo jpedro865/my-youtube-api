@@ -52,3 +52,7 @@ class BodyVideoUpdate(BaseModel):
 
 class BodyAddComment(BaseModel):
   body: str = None
+
+class BodyListComments(BaseModel):
+  page: int = 1
+  perPage: int = 5
