@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
 from src.controllers.video import add_video_to_user, get_videos, update_video, delete_video
-from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate
+from src.controllers.comment import add_comment_to_video
+from src.models import User, Auth, ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate, BodyAddComment
 
 app = FastAPI()
 
@@ -89,3 +90,9 @@ async def update_video_route(video_id: int, body: BodyVideoUpdate, request: Requ
 async def delete_video_route(video_id: int, request: Request):
     user_id = verify_token(request.headers.get("Authorization"))
     return delete_video(video_id, user_id)
+
+# This route will add a comment to a video
+@app.post("/video/{video_id}/comment", status_code=201)
+async def add_comment_to_video_route(video_id: int, body: BodyAddComment, request: Request):
+    user_id = verify_token(request.headers.get("Authorization"))
+    return add_comment_to_video(video_id, user_id, body.body)

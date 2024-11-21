@@ -1,4 +1,4 @@
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, func
 from src.db.connection import get_session, get_base
 from src.models import ApiException, VideoList
 from fastapi import UploadFile
@@ -16,15 +16,17 @@ VideoDb = get_base().classes.video
 USER_NOT_FOUND_MSG = "User not found"
 VIDEO_NOT_FOUND_MSG = "Video not found"
 PAGE_NOT_FOUND_MSG = "Page not found"
+WRONG_VIDEO_FORMAT = "Video must be in mp4 format"
+ERROR_SAVING_VIDEO = "Error while saving video"
+VIDEO_NAME_REQUIRED ="Video name is required"
+VIDEO_SOURCE_REQUIRED = "Video source is required"
 
 # This function will return a list of videos
 def get_videos(body: VideoList):
   session = get_session()
   try:
-    print(body)
     if body.page < 1:
       raise ValueError(PAGE_NOT_FOUND_MSG)
-    
     # get video of user
     user = None
     if body.user is not None and body.user != "":
@@ -41,17 +43,14 @@ def get_videos(body: VideoList):
     sql_rec = select(VideoDb)
     sql_rec_count = select(func.count(VideoDb.id))
     if user is not None:
-      print("has user")
       # search for videos of the user
       sql_rec = sql_rec.where(VideoDb.user_id == user.id)
       sql_rec_count = sql_rec_count.where(VideoDb.user_id == user.id)
     if body.duration is not None:
-      print("has duration")
       # search for videos with duration between duration - 10 and duration + 10
       sql_rec = sql_rec.where(VideoDb.duration.between(body.duration - 10, body.duration + 10))
       sql_rec_count = sql_rec_count.where(VideoDb.duration.between(body.duration - 10, body.duration + 10))
     if body.name is not None:
-      print("has name")
       # search for videos with name containing the search string
       sql_rec = sql_rec.where(VideoDb.name.like("%{}%".format(body.name)))
       sql_rec_count = sql_rec_count.where(VideoDb.name.like("%{}%".format(body.name)))
@@ -60,12 +59,7 @@ def get_videos(body: VideoList):
     try:
       total_videos = session.scalars(sql_rec_count).first()
     except Exception as e:
-      print("Error while getting total videos:")
-      print(e)
-      raise ApiException(500, 1999, ["Error while getting total videos"])
-    print(total_videos)
-
-    print("total_videos: {}".format(total_videos))
+      raise ValueError("Error while getting total videos")
 
     # calculate pagination offset
     offset = ((body.page -1 ) * body.perPage)
@@ -78,9 +72,7 @@ def get_videos(body: VideoList):
       # execute the query and get the videos
       videos = session.scalars(sql_rec).all()
     except Exception as e:
-      print("Error while limiting videos:")
-      print(e)
-      raise ApiException(500, 1999, ["Error while fetching videos"])
+      raise ValueError("Error while fetching videos")
     
     # verify if pages exists (Page 1 always exists)
     if (len(videos) == 0 and body.page != 1):
@@ -106,6 +98,8 @@ def get_videos(body: VideoList):
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    if PAGE_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1004, [PAGE_NOT_FOUND_MSG])
     raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will update a video
@@ -113,11 +107,11 @@ def update_video(video_id: int, name: str):
   session = get_session()
   try:
     if name is None:
-      raise ApiException(400, 1002, ["Nothing to update"])
+      raise ValueError("Nothing to update")
     
     video = session.query(VideoDb).filter(VideoDb.id == video_id).first()
     if video is None:
-      raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+      raise ValueError(VIDEO_NOT_FOUND_MSG)
 
     # update video name
     video.name = name
@@ -126,7 +120,7 @@ def update_video(video_id: int, name: str):
     # get user info
     user = session.query(UserDb).filter(UserDb.id == video.user_id).first()
     if user is None:
-      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+      raise ValueError(USER_NOT_FOUND_MSG)
 
     return {
       "message": "OK",
@@ -138,27 +132,31 @@ def update_video(video_id: int, name: str):
     print(e)
     if VIDEO_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+    if "Nothing to update" in str(e):
+      raise ApiException(400, 1007, ["Nothing to update"])
+    if USER_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
     raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will add a video to the user
 def add_video_to_user(user_id: int, name: str, video: UploadFile):
   session = get_session()
   if video is None:
-    raise ApiException(400, 1001, ["Video source is required"])
+    raise ValueError(VIDEO_SOURCE_REQUIRED)
   if name is None:
-    raise ApiException(400, 1002, ["Video name is required"])
+    raise ValueError(VIDEO_NAME_REQUIRED)
   if video.content_type != "video/mp4":
-    raise ApiException(400, 1003, ["Video must be in mp4 format"])
+    raise ValueError(WRONG_VIDEO_FORMAT)
   try:
     # get user and check if it exists
     user = session.query(UserDb).filter(UserDb.id == user_id).first()
     if user is None:
-      raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+      raise ValueError(USER_NOT_FOUND_MSG)
     
     # save video to public directory
     video_path = save_video_public(video)
     if video_path is None:
-      raise ApiException(500, 1999, ["Error while saving video"])
+      raise ValueError(ERROR_SAVING_VIDEO)
     
     # get video info (width, height, duration)
     video_info = get_video_info(video_path)
@@ -184,6 +182,14 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
     print(e)
     if USER_NOT_FOUND_MSG in str(e):
       raise ApiException(404, 1004, [USER_NOT_FOUND_MSG])
+    if WRONG_VIDEO_FORMAT in str(e):
+      raise ApiException(400, 1003, [WRONG_VIDEO_FORMAT])
+    if ERROR_SAVING_VIDEO in str(e):
+      raise ApiException(500, 1999, [ERROR_SAVING_VIDEO])
+    if VIDEO_NAME_REQUIRED in str(e):
+      raise ApiException(400, 1002, [VIDEO_NAME_REQUIRED])
+    if VIDEO_SOURCE_REQUIRED in str(e):
+      raise ApiException(400, 1002, [VIDEO_SOURCE_REQUIRED])
     raise ApiException(500, 1999, ["{}".format(e)])
 
 # This function will delete a video
@@ -205,6 +211,10 @@ def delete_video(video_id: int, user_id: int):
   except Exception as e:
     print("Error while deleting video:")
     print(e)
+    if VIDEO_NOT_FOUND_MSG in str(e):
+      raise ApiException(404, 1005, [VIDEO_NOT_FOUND_MSG])
+    if "Forbidden" in str(e):
+      raise ApiException(403, 1006, ["Forbidden"])
     raise ApiException(500, 1999, ["{}".format(e)])
   
 ############################################################## HELPER FUNCTIONS ##############################################################

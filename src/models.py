@@ -49,3 +49,6 @@ class BodyVideoListByUser(BaseModel):
 class BodyVideoUpdate(BaseModel):
   name: str = None
   user: int = None
+
+class BodyAddComment(BaseModel):
+  body: str = None
