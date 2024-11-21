@@ -94,7 +94,7 @@ def get_videos(body: VideoList):
       data.append(video_to_json(video, user))
     
     return {
-      "message": "No videos found",
+      "message": "OK",
       "data": data,
       "pager": {
         "current": body.page,
@@ -143,7 +143,7 @@ def add_video_to_user(user_id: int, name: str, video: UploadFile):
     Session.add(video)
     Session.commit()
     return {
-      "message": "Video added successfully",
+      "message": "OK",
       "data": video_to_json(video, user)
     }
   except Exception as e:
