@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 import secrets
 
-Session = get_session()
 TokenDb = get_base().classes.token
 
 #error message
@@ -16,6 +15,7 @@ VERIFICATION_ERROR_MSG = "Error while verifying token"
 # This function will create a token for a user and add it to the database
 def create_token(user_id: int):
   try:
+    Session = get_session()
     unexpired_token = user_has_unexpired_token(user_id)
     if unexpired_token:
       return unexpired_token
@@ -41,6 +41,7 @@ def create_token(user_id: int):
 # This function will verify if user possess a token
 def user_has_unexpired_token(user_id: int):
   try:
+    Session = get_session()
     # construct the query to get the token
     sql_rec = select(TokenDb).where(TokenDb.user_id == user_id)
     # execute the query and get the token
@@ -62,6 +63,7 @@ def user_has_unexpired_token(user_id: int):
   
 def verify_token(token: str, user_id: int):
   try:
+    Session = get_session()
     if token is None:
       raise ValueError(TOKEN_NOT_FOUND_MSG)
     # construct the query to get the token

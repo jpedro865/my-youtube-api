@@ -6,7 +6,6 @@ from bcrypt import hashpw, gensalt
 from sqlalchemy import select, or_, func
 from src.controllers.token import create_token, TOKEN_CREATION_ERROR_MSG
 
-Session = get_session()
 UserDb = get_base().classes.user
 
 #error message
@@ -19,6 +18,7 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 # This function will add a user to the database
 def add_user(user_data: User):
   try:
+    Session = get_session()
     validate_user(user_data)
     user_data.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
     user = UserDb(
@@ -50,6 +50,7 @@ def add_user(user_data: User):
 # This function will authenticate a user
 def auth_user(auth: Auth):
   try:
+    Session = get_session()
     validate_auth(auth)
 
     login = auth.login
@@ -89,6 +90,7 @@ def auth_user(auth: Auth):
 # This function will delete a user from the database
 def delete_user(user_id: int):
   try:
+    Session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user
@@ -115,6 +117,7 @@ def delete_user(user_id: int):
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
   try:
+    Session = get_session()
     validate_user_update(user_data)
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
@@ -181,6 +184,7 @@ def get_users(pseudo: str, page: int, per_page: int):
     }
   
   except Exception as e:
+    Session = get_session()
     Session.rollback()
     print("Error while getting users:")
     print(e)
@@ -191,6 +195,7 @@ def get_users(pseudo: str, page: int, per_page: int):
 # This function will get a user by its id from the database
 def get_user_by_id(user_id: int):
   try:
+    Session = get_session()
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user

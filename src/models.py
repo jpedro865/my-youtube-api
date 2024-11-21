@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Union
 
 # This is the User model that will be used to validate the request body
 class User(BaseModel):
@@ -32,3 +33,11 @@ class ApiException(Exception):
     self.status_code = status_code
     self.error_code = error_code
     self.errors = errors
+
+# BaseModel VideoList to validate request body of get_videos_route
+class VideoList(BaseModel):
+  name: str = None
+  user: Union[int, str] = None
+  duration: int = None
+  page: int = 1
+  perPage: int = 5

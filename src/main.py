@@ -2,8 +2,8 @@ from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
-from src.controllers.video import add_video_to_user
-from src.models import User, Auth, ApiException, GetUsersItem
+from src.controllers.video import add_video_to_user, get_videos
+from src.models import User, Auth, ApiException, GetUsersItem, VideoList
 
 app = FastAPI()
 
@@ -57,6 +57,7 @@ async def get_users_route(body: GetUsersItem):
 # This route will get a user from the database by id
 @app.get("/user/{user_id}", status_code=200)
 async def get_user_by_id_route(user_id: int, request: Request):
+    print(request.headers.get("Authorization"))
     verify_token(request.headers.get("Authorization"), user_id)
     return get_user_by_id(user_id)
 
@@ -65,3 +66,8 @@ async def get_user_by_id_route(user_id: int, request: Request):
 async def add_video_to_user_route(user_id: int = Path(...), Authorization: str = Header(...), name: str = Form(...), source: UploadFile = File(...)):
     verify_token(Authorization, user_id)
     return add_video_to_user(user_id, name, source)
+
+# This route will get a list of videos
+@app.get("/videos", status_code=200)
+async def get_videos_route(body: VideoList):
+    return get_videos(body)
