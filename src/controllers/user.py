@@ -4,7 +4,7 @@ from src.validators.user import validate_user, validate_auth, validate_user_upda
 from datetime import datetime
 from bcrypt import hashpw, gensalt
 from sqlalchemy import select, or_, func
-from src.controllers.token import create_token, TOKEN_CREATION_ERROR_MSG
+from src.controllers.token import create_token, TOKEN_CREATION_ERROR_MSG, update_token
 
 UserDb = get_base().classes.user
 
@@ -134,7 +134,8 @@ def update_user(user_id: int, user_data: User):
     session.commit()
     return {
       "message": "User updated successfully",
-      "data": user_to_json(user)
+      "data": user_to_json(user),
+      "token": update_token(user)
     }
   except Exception as e:
     session.rollback()

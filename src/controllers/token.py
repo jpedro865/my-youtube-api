@@ -71,6 +71,37 @@ def user_has_unexpired_token(user_id: int):
     print("Error while verifying if user has unexpired token:")
     print(e)
     return False
+
+# updates the token of a user with the new information
+def update_token(user):
+  try:
+    session = get_session()
+
+    # CREATE JSON TOKEN
+    expires = datetime.now() + timedelta(hours=3)
+    new_token = jwt.encode({
+      "user_id": user.id,
+      "username": user.username,
+      "pseudo": user.pseudo,
+      "email": user.email,
+      "exp": expires
+    }, environ['SECRET_KEY'], algorithm="HS256")
+
+    # add the token to the database
+    token = TokenDb(
+      code=new_token,
+      user_id=user.id,
+      expired_at=expires,
+    )
+    session.add(token)
+    session.commit()
+    return new_token
+  except Exception as e:
+    session.rollback()
+    print("Error while updating token:")
+    print(e)
+    return None
+
   
 def verify_token(token: str, user_id: int = None):
   try:
