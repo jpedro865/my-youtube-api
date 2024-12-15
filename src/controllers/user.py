@@ -18,8 +18,8 @@ PAGE_NOT_FOUND_MSG = "Page not found"
 # This function will add a user to the database
 def add_user(user_data: User):
   session = get_session()
+  validate_user(user_data)
   try:
-    validate_user(user_data)
     user_data.password = hashpw(user_data.password.encode("utf-8"), gensalt()).decode("utf-8")
     user = UserDb(
       username=user_data.username,
@@ -49,9 +49,8 @@ def add_user(user_data: User):
 # This function will authenticate a user
 def auth_user(auth: Auth):
   session = get_session()
+  validate_auth(auth)
   try:
-    validate_auth(auth)
-
     login = auth.login
     password = auth.password
     # construct the query to get the user
@@ -66,7 +65,7 @@ def auth_user(auth: Auth):
       raise ValueError(INVALID_PASSWORD_MSG)
     
     # create a token
-    token = create_token(user.id)
+    token = create_token(user)
     if token is None:
       raise ValueError(TOKEN_CREATION_ERROR_MSG)
     
@@ -116,8 +115,8 @@ def delete_user(user_id: int):
 # This function will update a user in the database
 def update_user(user_id: int, user_data: User):
   session = get_session()
-  try:
-    validate_user_update(user_data)
+  validate_user_update(user_data)
+  try:  
     # construct the query to get the user
     sql_rec = select(UserDb).where(UserDb.id == user_id)
     # execute the query and get the user

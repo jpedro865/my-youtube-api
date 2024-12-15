@@ -13,7 +13,7 @@ services:
       - myapi3
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d/
-      - mysql_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
 
   api:
     container_name: myapi3-api
@@ -26,6 +26,8 @@ services:
       - DB_USER=killux
       - DB_PASSWORD=killux
       - DB_NAME=mydb
+    env_file:
+      - .env
     volumes:
       - .:/app
     networks:

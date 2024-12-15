@@ -1,8 +1,10 @@
 from src.db.connection import get_session, get_base
-from src.models import ApiException
+from src.models import ApiException, User
 from datetime import datetime, timedelta
 from sqlalchemy import select
-import secrets
+from os import environ
+import jwt
+
 
 TokenDb = get_base().classes.token
 
@@ -13,21 +15,30 @@ TOKEN_EXPIRED_MSG = "Token expired"
 VERIFICATION_ERROR_MSG = "Error while verifying token"
 
 # This function will create a token for a user and add it to the database
-def create_token(user_id: int):
+def create_token(user):
   try:
     session = get_session()
-    unexpired_token = user_has_unexpired_token(user_id)
+    unexpired_token = user_has_unexpired_token(user.id)
     if unexpired_token:
       return unexpired_token
 
-    # create a new token
-    new_token = secrets.token_urlsafe(32)
+    # CREATE JSON TOKEN
+    expires = datetime.now() + timedelta(hours=3)
+    new_token = jwt.encode({
+      "user_id": user.id,
+      "username": user.username,
+      "pseudo": user.pseudo,
+      "email": user.email,
+      "exp": expires
+    }, environ['SECRET_KEY'], algorithm="HS256")
+
+    print(environ['SECRET_KEY'])
 
     # add the token to the database
     token = TokenDb(
       code=new_token,
-      user_id=user_id,
-      expired_at=datetime.now() + timedelta(hours=3),
+      user_id=user.id,
+      expired_at=expires,
     )
     session.add(token)
     session.commit()

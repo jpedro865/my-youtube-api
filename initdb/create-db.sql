@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`video_format` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`token` (
     `id` INT NOT NULL AUTO_INCREMENT,
-    `code` VARCHAR(45) NOT NULL,
+    `code` VARCHAR(255) NOT NULL,
     `expired_at` DATETIME NOT NULL,
     `user_id` INT NOT NULL,
     PRIMARY KEY (`id`),

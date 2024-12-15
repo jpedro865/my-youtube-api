@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Form, File, UploadFile, Path, Header
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from src.controllers.user import add_user, auth_user, delete_user, update_user, get_users, get_user_by_id
 from src.controllers.token import verify_token
 from src.controllers.video import add_video_to_user, get_videos, update_video, delete_video, add_video_format
@@ -7,6 +8,15 @@ from src.controllers.comment import add_comment_to_video, get_comments_of_video
 from src.models import User, Auth,ApiException, GetUsersItem, VideoList, BodyVideoListByUser, BodyVideoUpdate, BodyAddComment, BodyListComments, BodyAddFormat
 
 app = FastAPI()
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Exception handler
 @app.exception_handler(Exception)
@@ -18,6 +28,7 @@ async def exception_handler(request: Request, exc: ApiException):
             "code": exc.error_code,
             "data": exc.errors,
         },
+        headers={"Access-Control-Allow-Origin": request.headers.get('origin', '*'),}
     )
 
 # This is the root route
@@ -37,6 +48,17 @@ async def add_user_route(user: User):
 async def auth_route(auth: Auth):
     # This is a dummy function that will always return a 401
     return auth_user(auth)
+
+# This route will verify the token sent in the Authorization header
+@app.get("/auth", status_code=200)
+async def auth_route(request: Request):
+    user_id = verify_token(request.headers.get("Authorization"))
+    return {
+        "message": "Token is valid",
+        "data": {
+            "user_id": user_id
+        }
+    }
 
 # This route will delete a user from the database
 @app.delete("/user/{id}", status_code=204)
