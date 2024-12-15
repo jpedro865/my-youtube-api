@@ -1,5 +1,5 @@
 from src.db.connection import get_session, get_base
-from src.models import ApiException, User
+from src.models import ApiException
 from datetime import datetime, timedelta
 from sqlalchemy import select
 from os import environ
@@ -75,8 +75,10 @@ def user_has_unexpired_token(user_id: int):
 # updates the token of a user with the new information
 def update_token(user):
   try:
-    session = get_session()
+    # delete the old token
+    delete_user_tokens(user.id)
 
+    session = get_session()
     # CREATE JSON TOKEN
     expires = datetime.now() + timedelta(hours=3)
     new_token = jwt.encode({
@@ -129,3 +131,24 @@ def verify_token(token: str, user_id: int = None):
     elif TOKEN_EXPIRED_MSG in str(e):
       raise ApiException(401, 1401, [TOKEN_EXPIRED_MSG])
     raise ApiException(401, 1444, [VERIFICATION_ERROR_MSG])
+
+def delete_user_tokens(user_id: int):
+  try:
+    session = get_session()
+    # construct the query to get the token
+    sql_rec = select(TokenDb).where(TokenDb.user_id == user_id)
+    # execute the query and get the token
+    tokens = session.scalars(sql_rec).all()
+
+    # verify if token exist and is not expired
+    if tokens.__len__() == 0:
+      return True
+
+    for token in tokens:
+      session.delete(token)
+    session.commit()
+    return True
+  except Exception as e:
+    print("Error while deleting user tokens:")
+    print(e)
+    return False
