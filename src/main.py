@@ -92,8 +92,8 @@ async def add_video_to_user_route(user_id: int = Path(...), Authorization: str =
 
 # This route will get a list of videos
 @app.get("/videos", status_code=200)
-async def get_videos_route(body: VideoList):
-    return get_videos(body)
+async def get_videos_route(name: str = '', user:str = '', duration: int = 0, page: int = 1, perPage: int = 5):
+    return get_videos(VideoList(name=name, user=user, duration=duration, page=page, perPage=perPage))
 
 # This route will get a list of videos of the specified user
 @app.get("/user/{user_id}/videos", status_code=200)

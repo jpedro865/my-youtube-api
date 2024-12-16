@@ -47,7 +47,7 @@ def get_videos(body: VideoList):
       # search for videos of the user
       sql_rec = sql_rec.where(VideoDb.user_id == user.id)
       sql_rec_count = sql_rec_count.where(VideoDb.user_id == user.id)
-    if body.duration is not None:
+    if body.duration is not None and body.duration > 0:
       # search for videos with duration between duration - 10 and duration + 10
       sql_rec = sql_rec.where(VideoDb.duration.between(body.duration - 10, body.duration + 10))
       sql_rec_count = sql_rec_count.where(VideoDb.duration.between(body.duration - 10, body.duration + 10))
