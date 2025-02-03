@@ -16,6 +16,9 @@ git clone git@rendu-git.etna-alternance.net:module-9693/activity-52223/group-104
 # go to repo
 cd myapi3
 
+#build app
+make build
+
 # launch app
 make run
 ```
@@ -25,6 +28,9 @@ make run
 ```bash
 # runs the app
 make run
+
+# build the app
+make build
 
 # stops the app
 make stop
